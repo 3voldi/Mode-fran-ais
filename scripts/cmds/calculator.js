@@ -6,26 +6,25 @@ module.exports = {
   config: {
     name: "calculator",
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     role: 0,
     usePrefix: true, 
-    shortDescription: "Stylish calculator image via API",
-    longDescription: "Generate a stylish calculator image with your expression via API",
+    shortDescription: "Image de calculatrice stylée via API",
+    longDescription: "Génère une image de calculatrice stylée avec votre expression via API",
     category: "tools",
-    guide: "{pn} [expression] → e.g. {pn} 123+456",
+    guide: "{pn} [expression] → ex. {pn} 123+456",
     countDown: 3
   },
 
   onStart: async ({ message, args }) => {
     try {
-    
       if (!args.length || !args.join("").match(/^[0-9+\-*/().\s]+$/)) {
         return message.reply(
-          "⚠️ You used the calculator command incorrectly!\n\n" +
-          "✅ Correct usage examples:\n" +
-          "`/calculator 123+456` → Add numbers\n" +
-          "`/calculator (12*3)-5` → Complex expression\n\n" +
-          "💡 Only use numbers and operators (+, -, *, /, (, )) in the expression."
+          "⚠️ Vous avez mal utilisé la commande calculatrice !\n\n" +
+          "✅ Exemples d'utilisation correcte :\n" +
+          "`/calculator 123+456` → Additionner des nombres\n" +
+          "`/calculator (12*3)-5` → Expression complexe\n\n" +
+          "💡 Utilisez uniquement des chiffres et des opérateurs (+, -, *, /, (, )) dans l'expression."
         );
       }
 
@@ -45,9 +44,9 @@ module.exports = {
       return message.reply({ attachment: fs.createReadStream(filePath) });
 
     } catch (err) {
-      console.error("❌ Calculator command error:", err.message);
+      console.error("❌ Erreur commande calculatrice :", err.message);
       return message.reply(
-        "❌ Failed to generate calculator image.\n💬 Contact author for help: https://m.me/ye.bi.nobi.tai.244493"
+        "❌ Impossible de générer l'image de la calculatrice.\n💬 Contactez l'auteur pour de l'aide : https://m.me/ye.bi.nobi.tai.244493"
       );
     }
   }
