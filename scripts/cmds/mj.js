@@ -5,7 +5,7 @@ const path = require("path");
 const TASK_JSON = path.join(__dirname, "midj_tasks.json");
 if (!fs.existsSync(TASK_JSON)) fs.writeFileSync(TASK_JSON, "{}");
 
-// === CONFIG ===
+// === CONFIGURATION ===
 const BASE_URL = "https://midjanuarybyxnil.onrender.com";
 
 module.exports = {
@@ -15,8 +15,8 @@ module.exports = {
     author: "Christus",
     version: "2.4",
     role: 0,
-    shortDescription: "AI image generation (fast MJ API)",
-    longDescription: "Generate and upscale Midjourney-style images using fast API",
+    shortDescription: "Génération d'image IA (API MJ rapide)",
+    longDescription: "Génère et améliore des images style Midjourney via une API rapide",
     category: "image",
     guide: "{pn} <prompt>"
   },
@@ -24,42 +24,41 @@ module.exports = {
   onStart: async function ({ args, message, event }) {
     try {
       const prompt = args.join(" ").trim();
-      if (!prompt) return message.reply("⚠️ Please provide a prompt.");
+      if (!prompt) return message.reply("⚠️ Veuillez fournir un prompt.");
 
-      const processingMsg = await message.reply("🎨 Generating your image...");
+      const processingMsg = await message.reply("🎨 Génération de votre image...");
 
-      // === Request Image Generation ===
+      // === Demande de génération d'image ===
       const genRes = await axios.get(`${BASE_URL}/imagine?prompt=${encodeURIComponent(prompt)}`);
       const data = genRes.data;
 
-      console.log("🔍 API Response:", data);
+      console.log("🔍 Réponse API :", data);
 
-      // ✅ এখন শুধুই murl চেক করবে
       if (!data || !data.murl) {
         await message.unsend(processingMsg.messageID);
-        return message.reply("❌ Failed to start generation or invalid response from server.");
+        return message.reply("❌ Échec du lancement de la génération ou réponse invalide du serveur.");
       }
 
-      const taskId = data.taskId || "unknown";
+      const taskId = data.taskId || "inconnu";
       const murl = data.murl;
 
-      // === Store task ===
+      // === Sauvegarde de la tâche ===
       const tasks = JSON.parse(fs.readFileSync(TASK_JSON, "utf8"));
       tasks[event.threadID] = taskId;
       fs.writeFileSync(TASK_JSON, JSON.stringify(tasks, null, 2));
 
-      // === Send Generated Image ===
+      // === Envoi de l'image générée ===
       await message.unsend(processingMsg.messageID);
 
       const imgStream = await global.utils.getStreamFromURL(murl);
-      const bodyText = "🖼️ Generated Image\n💬 Reply with U1–U4 to Upscale.";
+      const bodyText = "🖼️ Image générée\n💬 Répondez avec U1–U4 pour améliorer.";
 
       const sentMsg = await message.reply({
         body: bodyText,
         attachment: imgStream
       });
 
-      // === Save Reply Context ===
+      // === Sauvegarde du contexte pour la réponse ===
       global.GoatBot.onReply.set(sentMsg.messageID, {
         commandName: this.config.name,
         taskId,
@@ -68,8 +67,8 @@ module.exports = {
       });
 
     } catch (err) {
-      console.error("Generation Error:", err);
-      return message.reply("❌ Failed to generate image. Please try again later.");
+      console.error("Erreur de génération :", err);
+      return message.reply("❌ Échec de la génération de l'image. Veuillez réessayer plus tard.");
     }
   },
 
@@ -79,23 +78,22 @@ module.exports = {
       if (!["u1", "u2", "u3", "u4"].includes(action)) return;
 
       const cid = action.replace("u", "");
-      const processingMsg = await message.reply(`🔄 Upscaling ${action.toUpperCase()}...`);
+      const processingMsg = await message.reply(`🔄 Amélioration ${action.toUpperCase()} en cours...`);
 
       const res = await axios.get(`${BASE_URL}/up?tid=${Reply.taskId}&cid=${cid}`);
       const data = res.data;
 
-      console.log("🔍 Upscale Response:", data);
+      console.log("🔍 Réponse amélioration :", data);
 
-      // ✅ শুধুমাত্র url চেক করবে (murl নয়)
       if (!data || !data.url) {
         await message.unsend(processingMsg.messageID);
-        return message.reply(`❌ Upscale failed for ${action.toUpperCase()}. Please try again.`);
+        return message.reply(`❌ Échec de l'amélioration ${action.toUpperCase()}. Veuillez réessayer.`);
       }
 
       await message.unsend(processingMsg.messageID);
 
       const imgStream = await global.utils.getStreamFromURL(data.url);
-      const resultMsg = `✅ Upscaled ${action.toUpperCase()}\n💬 You can reply again with U1–U4.`;
+      const resultMsg = `✅ Amélioration ${action.toUpperCase()} terminée\n💬 Vous pouvez répondre à nouveau avec U1–U4.`;
 
       const sentMsg = await message.reply({
         body: resultMsg,
@@ -110,8 +108,8 @@ module.exports = {
       });
 
     } catch (err) {
-      console.error("Upscale Error:", err);
-      return message.reply("❌ Error processing upscale request.");
+      console.error("Erreur lors de l'amélioration :", err);
+      return message.reply("❌ Erreur lors du traitement de la demande d'amélioration.");
     }
   }
 };
