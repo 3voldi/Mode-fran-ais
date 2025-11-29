@@ -1,10 +1,10 @@
-const a = require("axios");
-const b = require("fs");
-const c = require("path");
-const d = require("yt-search");
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const ytSearch = require("yt-search");
 
 async function getStream(url) {
-  const res = await a({ url, responseType: "stream" });
+  const res = await axios({ url, responseType: "stream" });
   return res.data;
 }
 
@@ -13,26 +13,27 @@ module.exports = {
     name: "sing",
     aliases: ["music", "song"],
     version: "0.0.1",
-    author: "ArYAN",
+    author: "Christus",
     countDown: 5,
     role: 0,
-    shortDescription: "Sing tomake chai",
-    longDescription: "Search and download music from YouTube",
+    shortDescription: "Chanter pour se détendre",
+    longDescription: "Rechercher et télécharger de la musique depuis YouTube",
     category: "media",
-    guide: "/play <song name or YouTube URL>"
+    guide: "/play <nom de la chanson ou URL YouTube>"
   },
 
-  onStart: async function ({ api: e, event: f, args: g, commandName: cmd }) {
-    if (!g.length) return e.sendMessage("❌ Provide a song name or YouTube URL.", f.threadID, f.messageID);
+  onStart: async function ({ api, event, args, commandName }) {
+    if (!args.length) 
+      return api.sendMessage("❌ Veuillez fournir un nom de chanson ou une URL YouTube.", event.threadID, event.messageID);
 
-    const aryan = g;
-    const query = aryan.join(" ");
-    if (query.startsWith("http")) return downloadSong(query, e, f);
+    const query = args.join(" ");
+    if (query.startsWith("http")) return downloadSong(query, api, event);
 
     try {
-      const res = await d(query);
+      const res = await ytSearch(query);
       const results = res.videos.slice(0, 6);
-      if (!results.length) return e.sendMessage("❌ No results found.", f.threadID, f.messageID);
+      if (!results.length) 
+        return api.sendMessage("❌ Aucun résultat trouvé.", event.threadID, event.messageID);
 
       let msg = "";
       results.forEach((v, i) => {
@@ -41,64 +42,64 @@ module.exports = {
 
       const thumbs = await Promise.all(results.map(v => getStream(v.thumbnail)));
 
-      e.sendMessage(
-        { body: msg + "Reply with number (1-6) to download song", attachment: thumbs },
-        f.threadID,
+      api.sendMessage(
+        { body: msg + "Répondez avec le numéro (1-6) pour télécharger la chanson", attachment: thumbs },
+        event.threadID,
         (err, info) => {
           if (err) return console.error(err);
           global.GoatBot.onReply.set(info.messageID, {
             results,
             messageID: info.messageID,
-            author: f.senderID,
-            commandName: cmd
+            author: event.senderID,
+            commandName
           });
         },
-        f.messageID
+        event.messageID
       );
     } catch (err) {
       console.error(err);
-      e.sendMessage("❌ Failed to search YouTube.", f.threadID, f.messageID);
+      api.sendMessage("❌ Échec de la recherche sur YouTube.", event.threadID, event.messageID);
     }
   },
 
-  onReply: async function ({ api: e, event: f, Reply: g }) {
-    const results = g.results;
-    const choice = parseInt(f.body);
+  onReply: async function ({ api, event, Reply }) {
+    const results = Reply.results;
+    const choice = parseInt(event.body);
 
     if (isNaN(choice) || choice < 1 || choice > results.length) {
-      return e.sendMessage("❌ Invalid selection.", f.threadID, f.messageID);
+      return api.sendMessage("❌ Sélection invalide.", event.threadID, event.messageID);
     }
 
     const selected = results[choice - 1];
-    await e.unsendMessage(g.messageID);
+    await api.unsendMessage(Reply.messageID);
 
-    downloadSong(selected.url, e, f, selected.title);
+    downloadSong(selected.url, api, event, selected.title);
   }
 };
 
 async function downloadSong(url, api, event, title = null) {
   try {
     const apiUrl = `http://65.109.80.126:20409/aryan/play?url=${encodeURIComponent(url)}`;
-    const res = await a.get(apiUrl);
+    const res = await axios.get(apiUrl);
     const data = res.data;
 
-    if (!data.status || !data.downloadUrl) throw new Error("API failed to return download URL.");
+    if (!data.status || !data.downloadUrl) throw new Error("L'API n'a pas renvoyé d'URL de téléchargement.");
 
     const songTitle = title || data.title;
     const fileName = `${songTitle}.mp3`.replace(/[\\/:"*?<>|]/g, "");
-    const filePath = c.join(__dirname, fileName);
+    const filePath = path.join(__dirname, fileName);
 
-    const songData = await a.get(data.downloadUrl, { responseType: "arraybuffer" });
-    b.writeFileSync(filePath, songData.data);
+    const songData = await axios.get(data.downloadUrl, { responseType: "arraybuffer" });
+    fs.writeFileSync(filePath, songData.data);
 
     await api.sendMessage(
-      { body: `• ${songTitle}`, attachment: b.createReadStream(filePath) },
+      { body: `• ${songTitle}`, attachment: fs.createReadStream(filePath) },
       event.threadID,
-      () => b.unlinkSync(filePath),
+      () => fs.unlinkSync(filePath),
       event.messageID
     );
   } catch (err) {
     console.error(err);
-    api.sendMessage(`❌ Failed to download song: ${err.message}`, event.threadID, event.messageID);
+    api.sendMessage(`❌ Échec du téléchargement de la chanson : ${err.message}`, event.threadID, event.messageID);
   }
 }
