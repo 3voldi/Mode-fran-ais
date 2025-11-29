@@ -7,12 +7,12 @@ module.exports = {
     name: "nanobanana",
     aliases: ["nb"],
     version: "1.0",
-    author: "Saimx69x | API Renz",
+    author: "Christus | API Renz",
     countDown: 5,
     role: 0,
-    shortDescription: "Generate image using NanoBanana API",
-    longDescription: "Generate an AI image based on your prompt using the NanoBanana API.",
-    category: "image generator",
+    shortDescription: "Générer une image avec l'API NanoBanana",
+    longDescription: "Génère une image IA basée sur votre prompt en utilisant l'API NanoBanana.",
+    category: "générateur d'images",
     guide: "{p}nanobanana [prompt]"
   },
 
@@ -20,11 +20,11 @@ module.exports = {
     const prompt = args.join(" ");
     if (!prompt) {
       return message.reply(
-        "⚠️ Please provide a prompt to generate an image.\nExample: /nanobanana A cute cat wearing sunglasses"
+        "⚠️ Veuillez fournir un prompt pour générer une image.\nExemple : /nanobanana Un chat mignon portant des lunettes de soleil"
       );
     }
 
-    const processingMsg = await message.reply("⏳ Generating your image...");
+    const processingMsg = await message.reply("⏳ Génération de votre image en cours...");
 
     const imgPath = path.join(__dirname, "cache", `${Date.now()}_nanobanana.jpg`);
     const seed = 12345; 
@@ -37,14 +37,14 @@ module.exports = {
       await fs.writeFile(imgPath, Buffer.from(res.data, "binary"));
       await api.unsendMessage(processingMsg.messageID);
       message.reply({
-        body: `✅ Generated image for: "${prompt}"`,
+        body: `✅ Image générée pour : "${prompt}"`,
         attachment: fs.createReadStream(imgPath)
       });
 
     } catch (err) {
-      console.error("NanoBanana API Error:", err);
+      console.error("Erreur API NanoBanana :", err);
       await api.unsendMessage(processingMsg.messageID);
-      message.reply("❌ Failed to generate image. Please try again later.");
+      message.reply("❌ Échec de la génération de l'image. Veuillez réessayer plus tard.");
     } finally {
       if (fs.existsSync(imgPath)) {
         await fs.remove(imgPath);
