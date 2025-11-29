@@ -1,69 +1,69 @@
 module.exports = {
- config: {
- name: "levelup",
- version: "1.3",
- author: "Christus",
- countDown: 5,
- role: 1,
- shortDescription: {
- en: "Set user's level (with exp sync)"
- },
- description: {
- en: "Boost or reduce user level and syncs XP with rank system"
- },
- category: "ranking",
- guide: {
- en: "{pn} @tag 10/20\n{pn} 25\n{pn} 100081330372098 -5 (by UID)"
- }
- },
+  config: {
+    name: "levelup",
+    version: "1.3",
+    author: "Christus",
+    countDown: 5,
+    role: 1,
+    shortDescription: {
+      fr: "Définir le niveau d'un utilisateur (avec synchronisation de l'XP)"
+    },
+    description: {
+      fr: "Augmente ou réduit le niveau d'un utilisateur et synchronise l'XP avec le système de classement"
+    },
+    category: "ranking",
+    guide: {
+      fr: "{pn} @tag 10/20\n{pn} 25\n{pn} 100081330372098 -5 (par UID)"
+    }
+  },
 
- onStart: async function ({ message, event, args, usersData, envCommands }) {
- const deltaNext = envCommands["rank"]?.deltaNext || 5;
+  onStart: async function ({ message, event, args, usersData, envCommands }) {
+    const deltaNext = envCommands["rank"]?.deltaNext || 5;
 
- // 🧠 Determine target ID (tag/reply/UID)
- let targetID;
- if (event.type === "message_reply") {
- targetID = event.messageReply.senderID;
- args.shift();
- } else if (Object.keys(event.mentions || {}).length > 0) {
- targetID = Object.keys(event.mentions)[0];
- args.shift();
- } else if (/^\d{6,}$/.test(args[0])) {
- targetID = args.shift();
- }
+    // 🧠 Déterminer l'ID cible (tag/réponse/UID)
+    let targetID;
+    if (event.type === "message_reply") {
+      targetID = event.messageReply.senderID;
+      args.shift();
+    } else if (Object.keys(event.mentions || {}).length > 0) {
+      targetID = Object.keys(event.mentions)[0];
+      args.shift();
+    } else if (/^\d{6,}$/.test(args[0])) {
+      targetID = args.shift();
+    }
 
- if (!targetID)
- return message.reply("❌ | Please tag, reply, or give a UID of the user.");
+    if (!targetID)
+      return message.reply("❌ | Veuillez taguer, répondre ou fournir un UID de l'utilisateur.");
 
- const input = args.find(arg => !isNaN(arg) || arg.includes("/"));
- if (!input)
- return message.reply("⚠️ | Provide a level number or range (e.g. 10/20 or -5)");
+    const input = args.find(arg => !isNaN(arg) || arg.includes("/"));
+    if (!input)
+      return message.reply("⚠️ | Fournissez un nombre de niveau ou une plage (ex: 10/20 ou -5)");
 
- // 🎯 Parse level change
- let levelChange;
- if (input.includes("/")) {
- const [min, max] = input.split("/").map(Number);
- if (isNaN(min) || isNaN(max) || min > max)
- return message.reply("❌ Invalid range.");
- levelChange = Math.floor(Math.random() * (max - min + 1)) + min;
- } else {
- levelChange = parseInt(input);
- }
+    // 🎯 Analyser le changement de niveau
+    let levelChange;
+    if (input.includes("/")) {
+      const [min, max] = input.split("/").map(Number);
+      if (isNaN(min) || isNaN(max) || min > max)
+        return message.reply("❌ Plage invalide.");
+      levelChange = Math.floor(Math.random() * (max - min + 1)) + min;
+    } else {
+      levelChange = parseInt(input);
+    }
 
- // 🧮 Get user and calculate level/exp
- const userData = await usersData.get(targetID);
- if (!userData)
- return message.reply("❌ | User not found in database.");
+    // 🧮 Récupérer l'utilisateur et calculer niveau/XP
+    const userData = await usersData.get(targetID);
+    if (!userData)
+      return message.reply("❌ | Utilisateur non trouvé dans la base de données.");
 
- const oldExp = userData.exp || 0;
- const oldLevel = Math.floor((1 + Math.sqrt(1 + 8 * oldExp / deltaNext)) / 2);
- const newLevel = oldLevel + levelChange;
- const newExp = Math.floor(((newLevel ** 2 - newLevel) * deltaNext) / 2);
+    const oldExp = userData.exp || 0;
+    const oldLevel = Math.floor((1 + Math.sqrt(1 + 8 * oldExp / deltaNext)) / 2);
+    const newLevel = oldLevel + levelChange;
+    const newExp = Math.floor(((newLevel ** 2 - newLevel) * deltaNext) / 2);
 
- await usersData.set(targetID, { exp: newExp });
+    await usersData.set(targetID, { exp: newExp });
 
- return message.reply(
- `📈 𝗟𝗲𝘃𝗲𝗹 𝗨𝗽𝗱𝗮𝘁𝗲\n━━━━━━━━━━━━━━\n👤 𝗨𝘀𝗲𝗿: ${userData.name} (${targetID})\n🎚️ 𝗟𝗲𝘃𝗲𝗹: ${oldLevel} → ${newLevel}\n✨ 𝗘𝗫𝗣: ${oldExp} → ${newExp}`
- );
- }
+    return message.reply(
+      `📈 MISE À JOUR DU NIVEAU\n━━━━━━━━━━━━━━\n👤 Utilisateur : ${userData.name} (${targetID})\n🎚️ Niveau : ${oldLevel} → ${newLevel}\n✨ XP : ${oldExp} → ${newExp}`
+    );
+  }
 };
