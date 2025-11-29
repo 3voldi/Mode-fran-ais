@@ -10,7 +10,7 @@ async function toFont(text, id = 3) {
     const { data } = await axios.get(apiUrl);
     return data.output || text;
   } catch (e) {
-    console.error("Font API error:", e.message);
+    console.error("Erreur API Font :", e.message);
     return text;
   }
 }
@@ -20,11 +20,11 @@ module.exports = {
     name: "narutoquiz",
     aliases: ["naruquiz", "nqz", "narutoqz"],
     version: "1.0",
-    author: "Saimx69x",
+    author: "Christus",
     countDown: 10,
     role: 0,
-    category: "game",
-    guide: { en: "{pn} — Naruto character guessing quiz" }
+    category: "jeu",
+    guide: { en: "{pn} — Quiz de devinette de personnage Naruto" }
   },
 
   onStart: async function ({ api, event }) {
@@ -40,15 +40,15 @@ module.exports = {
 
       const body = await toFont(`🥷 𝐍𝐚𝐫𝐮𝐭𝐨 𝐐𝐮𝐢𝐳 🍃
 ━━━━━━━━━━━━━━
-📷 Guess the Naruto character!
+📷 Devinez le personnage de Naruto !
 
 🅐 ${options.A}
 🅑 ${options.B}
 🅒 ${options.C}
 🅓 ${options.D}
 
-⏳ You have 1 minute 30 seconds!
-💡 You have 3 chances! Reply with A, B, C or D.`);
+⏳ Vous avez 1 minute 30 secondes !
+💡 Vous avez 3 chances ! Répondez avec A, B, C ou D.`);
 
       api.sendMessage(
         { body, attachment: imageStream.data },
@@ -73,7 +73,7 @@ module.exports = {
                 await api.unsendMessage(info.messageID);
                 global.GoatBot.onReply.delete(info.messageID);
               } catch (e) {
-                console.error("Failed to unsend quiz message:", e.message);
+                console.error("Échec de la suppression du message du quiz :", e.message);
               }
             }
           }, 90000);
@@ -82,7 +82,7 @@ module.exports = {
       );
     } catch (err) {
       console.error(err);
-      const failMsg = await toFont("❌ Failed to fetch Naruto quiz data.");
+      const failMsg = await toFont("❌ Échec de la récupération des données du quiz Naruto.");
       api.sendMessage(failMsg, event.threadID, event.messageID);
     }
   },
@@ -92,12 +92,12 @@ module.exports = {
     const reply = event.body?.trim().toUpperCase();
 
     if (event.senderID !== author) {
-      const msg = await toFont("⚠️ This is not your quiz!");
+      const msg = await toFont("⚠️ Ce n'est pas votre quiz !");
       return api.sendMessage(msg, event.threadID, event.messageID);
     }
 
     if (!reply || !["A", "B", "C", "D"].includes(reply)) {
-      const msg = await toFont("❌ Please reply with A, B, C or D.");
+      const msg = await toFont("❌ Veuillez répondre avec A, B, C ou D.");
       return api.sendMessage(msg, event.threadID, event.messageID);
     }
 
@@ -105,7 +105,7 @@ module.exports = {
       try {
         await api.unsendMessage(messageID);
       } catch (e) {
-        console.error("Failed to unsend quiz message:", e.message);
+        console.error("Échec de la suppression du message du quiz :", e.message);
       }
 
       const rewardCoin = 400;
@@ -115,13 +115,13 @@ module.exports = {
       userData.exp += rewardExp;
       await usersData.set(event.senderID, userData);
 
-      const correctMsg = await toFont(`🍥 Dattebayo! 🎉
+      const correctMsg = await toFont(`🍥 Dattebayo ! 🎉
 
-✅ You answered correctly!
+✅ Vous avez répondu correctement !
 💰 +${rewardCoin} Coins
 🌟 +${rewardExp} EXP
 
-🔥 You truly know your Naruto world!`);
+🔥 Vous connaissez vraiment l'univers de Naruto !`);
 
       if (global.GoatBot.onReply.has(messageID)) {
         global.GoatBot.onReply.get(messageID).answered = true;
@@ -134,17 +134,17 @@ module.exports = {
 
       if (chances > 0) {
         global.GoatBot.onReply.set(messageID, { ...Reply, chances });
-        const wrongTryMsg = await toFont(`❌ Wrong answer!
-⏳ You still have ${chances} chance(s) left. Try again!`);
+        const wrongTryMsg = await toFont(`❌ Mauvaise réponse !
+⏳ Il vous reste ${chances} chance(s). Réessayez !`);
         return api.sendMessage(wrongTryMsg, event.threadID, event.messageID);
       } else {
         try {
           await api.unsendMessage(messageID);
         } catch (e) {
-          console.error("Failed to unsend quiz message:", e.message);
+          console.error("Échec de la suppression du message du quiz :", e.message);
         }
-        const wrongMsg = await toFont(`🥺 Out of chances!
-✅ The correct option was: ${correctAnswer}`);
+        const wrongMsg = await toFont(`🥺 Plus de chances !
+✅ La bonne réponse était : ${correctAnswer}`);
         return api.sendMessage(wrongMsg, event.threadID, event.messageID);
       }
     }
